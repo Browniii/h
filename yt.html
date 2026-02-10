@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Thunderdome v9 (Embed Fix)</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --surface: #1e1e1e;
+            --surface-2: #2d2d2d;
+            --text-color: #e0e0e0;
+            --accent: #bb86fc;
+            --danger: #cf6679;
+            --success: #03dac6;
+            --warning: #ffb74d;
+            --discarded: #757575;
+        }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* --- Setup Screen --- */
+        #setup-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        h1 { color: var(--accent); margin-top: 0; }
+        
+        /* Inputs */
+        .input-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: bold; color: #aaa; }
+        textarea, input[type="text"] {
+            width: 100%;
+            background: var(--surface-2);
+            color: #fff;
+            border: 1px solid #444;
+            padding: 10px;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: monospace;
+        }
+        textarea { height: 150px; resize: vertical; }
+        
+        /* Playlist Section */
+        .playlist-box {
+            background: #252525;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 4px solid var(--accent);
+            margin-bottom: 20px;
+        }
+        .playlist-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        /* --- Tournament Screen --- */
+        #tournament-screen {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        header {
+            padding: 10px 20px;
+            background: var(--surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            z-index: 20;
+        }
+        .stats span { color: var(--accent); font-weight: bold; margin-right: 15px; }
+        
+        #arena {
+            flex: 1;
+            display: flex;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .competitor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #333;
+            overflow: hidden;
+            background: #000;
+        }
+        .competitor:last-child { border-right: none; }
+        
+        .video-title {
+            padding: 10px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: #000;
+            font-size: 0.9rem;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .yt-link {
+            display: block;
+            text-align: center;
+            color: #666;
+            font-size: 0.8rem;
+            padding: 5px 0;
+            text-decoration: none;
+            background: #151515;
+            transition: color 0.2s;
+        }
+        .yt-link:hover { color: var(--accent); text-decoration: underline; }
+        
+        iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #000;
+            display: block;
+        }
+        
+        /* Controls */
+        .controls {
+            padding: 15px;
+            background: var(--surface);
+            display: flex;
+            justify-content: center;
+        }
+        
+        /* Buttons */
+        button {
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-primary { background: var(--accent); color: #000; font-weight: bold; }
+        .btn-success { background: var(--success); color: #000; font-weight: bold; }
+        .btn-danger { background: var(--danger); color: #000; }
+        .btn-warning { background: var(--warning); color: #000; }
+        .btn-secondary { background: #444; color: #fff; }
+        .btn-sm { padding: 5px 10px; font-size: 0.8rem; }
+        
+        .winner-btn {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1rem;
+            background: var(--success);
+            color: #000;
+            font-weight: bold;
+        }
+
+        .skip-container {
+            position: absolute;
+            bottom: 80px; 
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        .skip-btn {
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #555;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            border-radius: 20px;
+        }
+
+        /* --- Modals & Overlays --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        
+        .modal-content {
+            background: var(--surface);
+            width: 80%;
+            max-width: 900px;
+            height: 80%;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .video-list {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #333;
+            background: var(--bg-color);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .tab-btn {
+            background: transparent;
+            border: 1px solid #444;
+            color: #aaa;
+            padding: 5px 15px;
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+        th { background: var(--surface-2); position: sticky; top: 0; }
+        tr:hover { background: #1a1a1a; }
+        
+        .status-queue { color: var(--warning); }
+        .status-next { color: var(--success); }
+        .status-discard { color: var(--discarded); text-decoration: line-through; }
+        .status-fight { color: var(--danger); font-weight: bold; }
+        
+        .table-link {
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9em;
+            margin-left: 5px;
+            border: 1px solid #444;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .table-link:hover { text-decoration: none; background: #333; }
+
+        /* Spinner */
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Preloader (Hidden) */
+        #preloader {
+            position: absolute;
+            width: 1px; height: 1px;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* File Upload */
+        #file-upload-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        #csv-upload {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="modal-overlay">
+        <div class="spinner"></div>
+        <div id="loading-text">Working...</div>
+    </div>
+
+    <!-- Manager Modal -->
+    <div id="manager-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Manage Video Pool</h2>
+                <button class="btn-danger btn-sm" onclick="toggleManager(false)">Close</button>
+            </div>
+            
+            <div style="margin-bottom: 20px; padding: 15px; background: var(--surface-2); border-radius: 4px;">
+                <label>Add Videos Mid-Tournament (Paste URLs):</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="add-mid-input" placeholder="https://youtu.be/...">
+                    <button class="btn-primary btn-sm" onclick="addVideosMidGame()">Inject</button>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" onclick="renderManagerTable('active')" id="tab-active">Active (Queue/Safe)</button>
+                <button class="tab-btn" onclick="renderManagerTable('discarded')" id="tab-discarded">Discarded</button>
+            </div>
+
+            <div class="video-list">
+                <table id="video-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>ID</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="video-table-body">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setup Screen -->
+    <div id="setup-screen">
+        <div class="container">
+            <h1>Video Thunderdome</h1>
+            
+            <!-- Playlist Importer -->
+            <div class="playlist-box">
+                <label>Option A: Import from YouTube Playlist</label>
+                <div class="input-group">
+                    <div class="playlist-controls">
+                        <input type="text" id="playlist-id" placeholder="Playlist URL or ID (PL...)">
+                        <button class="btn-secondary" onclick="fetchPlaylist()">Import</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Input -->
+            <div class="input-group">
+                <label>Option B: Paste URLs (One per line)</label>
+                <textarea id="url-input" placeholder="https://www.youtube.com/watch?v=..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button class="btn-primary" onclick="startTournament()">Start Tournament</button>
+                
+                <div id="file-upload-wrapper">
+                    <button class="btn-secondary" onclick="document.getElementById('csv-upload').click()">📂 Upload Progress (CSV)</button>
+                    <input type="file" id="csv-upload" accept=".csv" onchange="handleFileUpload(this)">
+                </div>
+            </div>
+            <p id="error-msg" style="color: var(--danger); text-align: center; margin-top: 10px;"></p>
+        </div>
+    </div>
+
+    <!-- Tournament Screen -->
+    <div id="tournament-screen">
+        <header>
+            <div class="stats">
+                Survivors: <span id="survivors-count">0</span>
+                In Queue: <span id="pool-count">0</span>
+                Discarded: <span id="discard-count">0</span>
+                Round: <span id="round-num">1</span>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-warning btn-sm" onclick="toggleManager(true)">Manage Pool</button>
+                <button class="btn-success btn-sm" onclick="exportCSV()">Download CSV</button>
+                <button class="btn-danger btn-sm" onclick="resetAll()">Reset</button>
+            </div>
+        </header>
+
+        <div id="arena">
+            <!-- Skip Button -->
+            <div class="skip-container">
+                <button class="skip-btn" onclick="skipMatch()">Skip (Reroll)</button>
+            </div>
+
+            <!-- Left Competitor -->
+            <div class="competitor" id="comp-left">
+                <div class="video-title" id="title-left">Loading title...</div>
+                <iframe id="frame-left" 
+                    src="about:blank"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    referrerpolicy="strict-origin-when-cross-origin" 
+                    allowfullscreen>
+                </iframe>
+                <a id="link-left" class="yt-link" target="_blank" href="#">Watch on YouTube ↗</a>
+                <div class="controls">
+                    <button class="winner-btn" onclick="vote('left')">👈 WINNER</button>
+                </div>
+            </div>
+
+            <!-- Right Competitor -->
+            <div class="competitor" id="comp-right">
+                <div class="video-title" id="title-right">Loading title...</div>
+                <iframe id="frame-right" 
+                    src="about:blank"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                    referrerpolicy="strict-origin-when-cross-origin" 
+                    allowfullscreen>
+                </iframe>
+                <a id="link-right" class="yt-link" target="_blank" href="#">Watch on YouTube ↗</a>
+                <div class="controls">
+                    <button class="winner-btn" onclick="vote('right')">WINNER 👉</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preloader -->
+        <div id="preloader"></div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const API_KEY = "AIzaSyD41JPcco8QdW7VSuADXDI7Z28RLFSr9Mc";
+
+        // --- State ---
+        let state = {
+            queue: [],       
+            nextRound: [],   
+            discarded: [],
+            currentRoundNum: 1,
+            currentPair: null 
+        };
+
+        let managerTab = 'active';
+
+        // --- CSV Upload Logic ---
+        function handleFileUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseCSVAndStart(text);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSVAndStart(csvText) {
+            const lines = csvText.split(/\r?\n/).filter(line => line.trim() !== '');
+            if (lines.length > 0 && lines[0].toLowerCase().includes('title')) {
+                lines.shift();
+            }
+
+            if (lines.length < 1) {
+                alert("CSV appears empty or invalid.");
+                return;
+            }
+
+            const fighting = [];
+            state.queue = [];
+            state.nextRound = [];
+            state.discarded = [];
+            state.currentPair = null;
+
+            lines.forEach(line => {
+                const lastComma = line.lastIndexOf(',');
+                if (lastComma === -1) return; 
+                
+                const status = line.substring(lastComma + 1).trim();
+                let remainder = line.substring(0, lastComma);
+
+                const secondLastComma = remainder.lastIndexOf(',');
+                if (secondLastComma === -1) return;
+                
+                remainder = remainder.substring(0, secondLastComma);
+
+                const thirdLastComma = remainder.lastIndexOf(',');
+                let id = "";
+                let title = "";
+
+                if (thirdLastComma !== -1) {
+                    id = remainder.substring(thirdLastComma + 1).trim();
+                    title = remainder.substring(0, thirdLastComma).trim();
+                } else {
+                    return; 
+                }
+
+                if (title.startsWith('"') && title.endsWith('"')) {
+                    title = title.substring(1, title.length - 1).replace(/""/g, '"');
+                }
+
+                const vidObj = { id, title };
+
+                if (status.includes('Fighting Now')) {
+                    fighting.push(vidObj);
+                } else if (status.includes('Discarded')) {
+                    state.discarded.push(vidObj);
+                } else if (status.includes('Advanced')) {
+                    state.nextRound.push(vidObj);
+                } else {
+                    state.queue.push(vidObj);
+                }
+            });
+
+            if (fighting.length === 2) {
+                state.currentPair = { left: fighting[0], right: fighting[1] };
+            } else {
+                state.queue.push(...fighting);
+                state.queue = shuffleArray(state.queue);
+            }
+
+            state.currentRoundNum = (state.nextRound.length > 0) ? "In Progress" : 1;
+
+            saveState();
+            renderTournament();
+            
+            if (state.currentPair) {
+                updateUI();
+                preloadNext();
+            } else {
+                nextMatch();
+            }
+
+            alert("Tournament restored from CSV!");
+        }
+
+        // --- Playlist Fetching ---
+        async function fetchPlaylist() {
+            let playlistInput = document.getElementById('playlist-id').value.trim();
+            const msg = document.getElementById('error-msg');
+
+            const listMatch = playlistInput.match(/[?&]list=([^#&?]+)/);
+            if (listMatch) playlistInput = listMatch[1];
+            if (!playlistInput.startsWith("PL") && !playlistInput.startsWith("UU") && !playlistInput.startsWith("FL")) {
+                msg.innerText = "Invalid Playlist ID.";
+                return;
+            }
+
+            showLoading(true, "Fetching items...");
+            let items = [];
+            let nextPageToken = '';
+            
+            try {
+                do {
+                    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistInput}&key=${API_KEY}&pageToken=${nextPageToken}`;
+                    const resp = await fetch(url);
+                    const data = await resp.json();
+                    
+                    if (data.error) throw new Error(data.error.message);
+
+                    const newItems = data.items.map(item => ({
+                        id: item.snippet.resourceId.videoId,
+                        title: item.snippet.title
+                    }));
+                    items = items.concat(newItems);
+                    nextPageToken = data.nextPageToken;
+                    
+                    showLoading(true, `Fetched ${items.length} items...`);
+
+                } while (nextPageToken);
+
+                const textArea = document.getElementById('url-input');
+                const existing = textArea.value;
+                const formatted = items.map(v => `${v.title} ||| ${v.id}`).join('\n');
+                textArea.value = existing ? existing + '\n' + formatted : formatted;
+                
+                msg.innerText = "";
+                alert(`Successfully imported ${items.length} videos! Now click 'Start Tournament'.`);
+            } catch (e) {
+                alert("Error fetching playlist: " + e.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // --- Core Logic ---
+
+        function startTournament() {
+            const input = document.getElementById('url-input').value;
+            if(!input.trim()) {
+                alert("The list is empty!");
+                return;
+            }
+
+            const videos = parseInput(input);
+            if (videos.length < 2) {
+                alert("Need at least 2 valid videos.");
+                return;
+            }
+
+            const unique = deduplicate(videos);
+
+            state = {
+                queue: shuffleArray(unique),
+                nextRound: [],
+                discarded: [],
+                currentRoundNum: 1,
+                currentPair: null
+            };
+
+            saveState();
+            renderTournament();
+            nextMatch();
+        }
+
+        function parseInput(text) {
+            const lines = text.split('\n').filter(l => l.trim() !== '');
+            const videos = [];
+            const urlRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+
+            lines.forEach(line => {
+                if (line.includes(' ||| ')) {
+                    const parts = line.split(' ||| ');
+                    videos.push({ title: parts[0].trim(), id: parts[1].trim() });
+                } else {
+                    const match = urlRegex.exec(line);
+                    if (match) {
+                        videos.push({ id: match[1], title: null });
+                    }
+                }
+            });
+            return videos;
+        }
+
+        function deduplicate(videos) {
+            const unique = [];
+            const seen = new Set();
+            videos.forEach(v => {
+                if (!seen.has(v.id)) {
+                    seen.add(v.id);
+                    unique.push(v);
+                }
+            });
+            return unique;
+        }
+
+        async function nextMatch() {
+            if (state.queue.length < 2) {
+                if (state.queue.length === 1) {
+                    state.nextRound.push(state.queue.pop());
+                }
+
+                if (state.nextRound.length <= 1 && state.queue.length === 0) {
+                    if(state.nextRound.length === 1) {
+                         updateUI(); 
+                         alert(`🏆 WINNER: ${state.nextRound[0].title || state.nextRound[0].id}`);
+                    }
+                    return;
+                }
+
+                if (typeof state.currentRoundNum === 'number') {
+                    state.currentRoundNum++;
+                } else {
+                    state.currentRoundNum = 2; 
+                }
+                
+                state.queue = shuffleArray([...state.nextRound]);
+                state.nextRound = [];
+            }
+
+            const v1 = state.queue.pop();
+            const v2 = state.queue.pop();
+            state.currentPair = { left: v1, right: v2 };
+
+            updateUI();
+            preloadNext();
+            
+            if (!v1.title) fetchTitle(v1, 'left');
+            if (!v2.title) fetchTitle(v2, 'right');
+            
+            saveState();
+        }
+
+        function vote(side) {
+            if (!state.currentPair) return;
+            const winner = side === 'left' ? state.currentPair.left : state.currentPair.right;
+            const loser = side === 'left' ? state.currentPair.right : state.currentPair.left;
+            
+            state.nextRound.push(winner);
+            state.discarded.push(loser); 
+            nextMatch();
+        }
+
+        function skipMatch() {
+            if (!state.currentPair) return;
+            state.queue.unshift(state.currentPair.left);
+            state.queue.unshift(state.currentPair.right);
+            state.queue = shuffleArray(state.queue);
+            nextMatch();
+        }
+        
+        function getEmbedUrl(videoId, autoplay = '1') {
+            // Fixed YouTube embed parameters - removed enablejsapi and origin issues
+            const params = new URLSearchParams({
+                rel: '0',
+                modestbranding: '1',
+                playsinline: '1',
+                autoplay: autoplay,
+                mute: '1', // Mute by default to comply with autoplay policies
+                controls: '1',
+                disablekb: '1',
+                fs: '0',
+                iv_load_policy: '3',
+                loop: '0',
+                enablejsapi: '0', // Set to 0 to avoid API errors
+                widget_referrer: window.location.origin
+            });
+            return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+        }
+
+        function preloadNext() {
+            const container = document.getElementById('preloader');
+            container.innerHTML = ''; 
+
+            if (state.queue.length >= 2) {
+                const next1 = state.queue[state.queue.length - 1];
+                const next2 = state.queue[state.queue.length - 2];
+                [next1, next2].forEach(vid => {
+                     const ifr = document.createElement('iframe');
+                     ifr.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+                     ifr.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+                     ifr.setAttribute('allowfullscreen', '');
+                     ifr.title = "YouTube video player";
+                     ifr.src = getEmbedUrl(vid.id, '0');
+                     container.appendChild(ifr);
+                });
+            }
+        }
+
+        // --- Manager & Injection ---
+
+        function toggleManager(show) {
+            const el = document.getElementById('manager-modal');
+            el.style.display = show ? 'flex' : 'none';
+            if (show) {
+                renderManagerTable(managerTab);
+                fetchMissingTitlesBackground();
+            }
+        }
+
+        function renderManagerTable(tab) {
+            managerTab = tab || managerTab;
+            document.getElementById('tab-active').className = managerTab === 'active' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tab-discarded').className = managerTab === 'discarded' ? 'tab-btn active' : 'tab-btn';
+
+            const tbody = document.getElementById('video-table-body');
+            tbody.innerHTML = '';
+
+            const createRow = (vid, statusClass, statusText) => {
+                const tr = document.createElement('tr');
+                let actions = '';
+                if (statusText === 'Discarded') {
+                    actions = `<button class="btn-success btn-sm" onclick="moveStatus('${vid.id}', 'revive')">Revive to Queue</button>`;
+                } else if (statusText.includes('Queue')) {
+                    actions = `<button class="btn-danger btn-sm" onclick="moveStatus('${vid.id}', 'discard')">Discard</button>`;
+                } else if (statusText.includes('Safe')) {
+                    actions = `<button class="btn-danger btn-sm" onclick="moveStatus('${vid.id}', 'discard_safe')">Discard</button>`;
+                }
+
+                // Add Link
+                const link = `<a href="https://www.youtube.com/watch?v=${vid.id}" target="_blank" class="table-link">↗</a>`;
+
+                tr.innerHTML = `
+                    <td>${vid.title || 'Unknown Title'}</td>
+                    <td>${vid.id} ${link}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                    <td>${actions}</td>
+                `;
+                return tr;
+            };
+
+            if (managerTab === 'active') {
+                if (state.currentPair) {
+                    tbody.appendChild(createRow(state.currentPair.left, 'status-fight', 'FIGHTING'));
+                    tbody.appendChild(createRow(state.currentPair.right, 'status-fight', 'FIGHTING'));
+                }
+                state.queue.forEach(v => tbody.appendChild(createRow(v, 'status-queue', 'In Queue')));
+                state.nextRound.forEach(v => tbody.appendChild(createRow(v, 'status-next', 'Safe')));
+            } else {
+                state.discarded.forEach(v => tbody.appendChild(createRow(v, 'status-discard', 'Discarded')));
+            }
+        }
+
+        function moveStatus(vidId, action) {
+            const findAndRemove = (arr) => {
+                const idx = arr.findIndex(v => v.id === vidId);
+                if (idx > -1) return arr.splice(idx, 1)[0];
+                return null;
+            };
+
+            let vid = null;
+            if (action === 'revive') {
+                vid = findAndRemove(state.discarded);
+                if (vid) state.queue.unshift(vid); 
+            } else if (action === 'discard') {
+                vid = findAndRemove(state.queue);
+                if (vid) state.discarded.push(vid);
+            } else if (action === 'discard_safe') {
+                vid = findAndRemove(state.nextRound);
+                if (vid) state.discarded.push(vid);
+            }
+
+            saveState();
+            updateUI(); 
+            renderManagerTable(managerTab); 
+        }
+
+        function addVideosMidGame() {
+            const inputEl = document.getElementById('add-mid-input');
+            const text = inputEl.value;
+            if (!text.trim()) return;
+
+            const newVideos = parseInput(text);
+            if (newVideos.length === 0) {
+                alert("No valid URLs found.");
+                return;
+            }
+
+            let addedCount = 0;
+            newVideos.forEach(nv => {
+                state.queue.push(nv);
+                addedCount++;
+            });
+            state.queue = shuffleArray(state.queue);
+            
+            inputEl.value = '';
+            saveState();
+            updateUI();
+            renderManagerTable(managerTab);
+            fetchMissingTitlesBackground(); 
+            alert(`Added ${addedCount} videos to the queue!`);
+        }
+
+        // --- Metadata ---
+        async function fetchTitle(videoObj, side) {
+            if(videoObj.title && videoObj.title !== 'Unknown Title') return;
+            try {
+                const res = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoObj.id}`);
+                const data = await res.json();
+                if (data.title) {
+                    videoObj.title = data.title;
+                    if (side && state.currentPair && state.currentPair[side].id === videoObj.id) {
+                        document.getElementById(`title-${side}`).innerText = data.title;
+                    }
+                    saveState();
+                }
+            } catch (e) { console.log("Fetch error", e); }
+        }
+
+        async function fetchMissingTitlesBackground() {
+            // Collect all items that need fetching
+            const allLists = [...state.queue, ...state.nextRound, ...state.discarded];
+            let retryList = [];
+            
+            // Pass 1: Try everyone who is unknown
+            for (let vid of allLists) {
+                if (!vid.title || vid.title === 'Unknown Title') {
+                    await fetchTitle(vid);
+                    if (document.getElementById('manager-modal').style.display === 'flex') {
+                        renderManagerTable(managerTab);
+                    }
+                    if (!vid.title || vid.title === 'Unknown Title') retryList.push(vid);
+                    await new Promise(r => setTimeout(r, 200)); 
+                }
+            }
+
+            // Pass 2: Retry failures after a longer delay
+            if (retryList.length > 0) {
+                await new Promise(r => setTimeout(r, 1500)); 
+                for (let vid of retryList) {
+                    await fetchTitle(vid);
+                    if (document.getElementById('manager-modal').style.display === 'flex') {
+                        renderManagerTable(managerTab);
+                    }
+                    await new Promise(r => setTimeout(r, 400));
+                }
+            }
+        }
+
+        // --- UI & Utils ---
+
+        function updateUI() {
+            const p = state.currentPair;
+            if (!p) return;
+
+            const leftSrc = getEmbedUrl(p.left.id, '1');
+            const rightSrc = getEmbedUrl(p.right.id, '1');
+
+            // Fixed: Use innerHTML replacement instead of src change to avoid YouTube API errors
+            const leftContainer = document.getElementById('comp-left');
+            const rightContainer = document.getElementById('comp-right');
+            
+            // Create new iframe HTML for left side
+            const leftIframeHTML = `<iframe 
+                src="${leftSrc}"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                referrerpolicy="strict-origin-when-cross-origin" 
+                allowfullscreen
+                style="flex: 1; width: 100%; border: none; background: #000; display: block;"
+            ></iframe>`;
+            
+            // Create new iframe HTML for right side
+            const rightIframeHTML = `<iframe 
+                src="${rightSrc}"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                referrerpolicy="strict-origin-when-cross-origin" 
+                allowfullscreen
+                style="flex: 1; width: 100%; border: none; background: #000; display: block;"
+            ></iframe>`;
+            
+            // Replace the iframe by replacing the entire competitor's iframe container content
+            const leftIframeContainer = document.getElementById('frame-left').parentNode;
+            const rightIframeContainer = document.getElementById('frame-right').parentNode;
+            
+            // Get the positions
+            const leftTitle = document.getElementById('title-left');
+            const rightTitle = document.getElementById('title-right');
+            const leftLink = document.getElementById('link-left');
+            const rightLink = document.getElementById('link-right');
+            
+            // Update titles and links first
+            leftTitle.innerText = p.left.title || "Loading...";
+            rightTitle.innerText = p.right.title || "Loading...";
+            leftLink.href = `https://www.youtube.com/watch?v=${p.left.id}`;
+            rightLink.href = `https://www.youtube.com/watch?v=${p.right.id}`;
+            
+            // Create new iframe elements
+            const newLeftIframe = document.createElement('iframe');
+            const newRightIframe = document.createElement('iframe');
+            
+            // Set attributes for left iframe
+            newLeftIframe.src = leftSrc;
+            newLeftIframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+            newLeftIframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+            newLeftIframe.setAttribute('allowfullscreen', '');
+            newLeftIframe.style.cssText = 'flex: 1; width: 100%; border: none; background: #000; display: block;';
+            newLeftIframe.id = 'frame-left';
+            
+            // Set attributes for right iframe
+            newRightIframe.src = rightSrc;
+            newRightIframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+            newRightIframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+            newRightIframe.setAttribute('allowfullscreen', '');
+            newRightIframe.style.cssText = 'flex: 1; width: 100%; border: none; background: #000; display: block;';
+            newRightIframe.id = 'frame-right';
+            
+            // Replace old iframes
+            const oldLeftIframe = document.getElementById('frame-left');
+            const oldRightIframe = document.getElementById('frame-right');
+            oldLeftIframe.parentNode.replaceChild(newLeftIframe, oldLeftIframe);
+            oldRightIframe.parentNode.replaceChild(newRightIframe, oldRightIframe);
+
+            document.getElementById('survivors-count').innerText = state.nextRound.length;
+            document.getElementById('pool-count').innerText = state.queue.length;
+            document.getElementById('discard-count').innerText = state.discarded ? state.discarded.length : 0;
+            document.getElementById('round-num').innerText = state.currentRoundNum;
+        }
+
+        function renderTournament() {
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('tournament-screen').style.display = 'flex';
+        }
+
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,Title,Video ID,YouTube Link,Status\n";
+            const escapeCsv = (txt) => `"${(txt || '').replace(/"/g, '""')}"`;
+
+            const addRow = (v, status) => {
+                const row = [
+                    escapeCsv(v.title || 'Unknown'),
+                    v.id,
+                    `https://youtu.be/${v.id}`,
+                    status
+                ].join(",");
+                csvContent += row + "\n";
+            };
+
+            if(state.currentPair) {
+                addRow(state.currentPair.left, "Fighting Now");
+                addRow(state.currentPair.right, "Fighting Now");
+            }
+            state.queue.forEach(v => addRow(v, "In Queue"));
+            state.nextRound.forEach(v => addRow(v, "Advanced to Next Round"));
+            state.discarded.forEach(v => addRow(v, "Discarded"));
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `tournament_export_round_${state.currentRoundNum}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function saveState() {
+            if (!state.discarded) state.discarded = [];
+            localStorage.setItem('yt_tourn_v7', JSON.stringify(state));
+        }
+
+        function resetAll() {
+            if(confirm("Delete all progress?")) {
+                localStorage.removeItem('yt_tourn_v7');
+                location.reload();
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function showLoading(show, text="Working...") {
+            const el = document.getElementById('loading-overlay');
+            el.style.display = show ? 'flex' : 'none';
+            if(show) document.getElementById('loading-text').innerText = text;
+        }
+    </script>
+</body>
+</html>
