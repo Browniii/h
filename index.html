@@ -724,24 +724,23 @@
             nextMatch();
         }
         
-        function getEmbedUrl(videoId, autoplay = '1') {
-            // Fixed YouTube embed parameters - removed enablejsapi and origin issues
-            const params = new URLSearchParams({
-                rel: '0',
-                modestbranding: '1',
-                playsinline: '1',
-                autoplay: autoplay,
-                mute: '1', // Mute by default to comply with autoplay policies
-                controls: '1',
-                disablekb: '1',
-                fs: '0',
-                iv_load_policy: '3',
-                loop: '0',
-                enablejsapi: '0', // Set to 0 to avoid API errors
-                widget_referrer: window.location.origin
-            });
-            return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
-        }
+function getEmbedUrl(videoId, autoplay = '0') { // Change default to '0'
+    const params = new URLSearchParams({
+        rel: '0',
+        modestbranding: '1',
+        playsinline: '1',
+        autoplay: '0',      // Force autoplay OFF
+        mute: '0',          // Force mute OFF (Sound ON)
+        controls: '1',
+        disablekb: '1',
+        fs: '0',
+        iv_load_policy: '3',
+        loop: '0',
+        enablejsapi: '0',
+        widget_referrer: window.location.origin
+    });
+    return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+}
 
         function preloadNext() {
             const container = document.getElementById('preloader');
@@ -1055,3 +1054,4 @@
     </script>
 </body>
 </html>
+
