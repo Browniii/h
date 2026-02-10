@@ -917,8 +917,8 @@ function getEmbedUrl(videoId, autoplay = '0') { // Change default to '0'
             const p = state.currentPair;
             if (!p) return;
 
-            const leftSrc = getEmbedUrl(p.left.id, '1');
-            const rightSrc = getEmbedUrl(p.right.id, '1');
+            const leftSrc = getEmbedUrl(p.left.id, '0');
+            const rightSrc = getEmbedUrl(p.right.id, '0');
 
             // Fixed: Use innerHTML replacement instead of src change to avoid YouTube API errors
             const leftContainer = document.getElementById('comp-left');
@@ -1054,4 +1054,5 @@ function getEmbedUrl(videoId, autoplay = '0') { // Change default to '0'
     </script>
 </body>
 </html>
+
 
