@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Thunderdome v9 (Embed Fix)</title>
+    <title>Video Tourny Thing v9 (Embed Fix)</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -364,7 +364,7 @@
     <!-- Setup Screen -->
     <div id="setup-screen">
         <div class="container">
-            <h1>Video Thunderdome</h1>
+            <h1>Video Tourny Thing</h1>
             
             <!-- Playlist Importer -->
             <div class="playlist-box">
@@ -387,7 +387,7 @@
                 <button class="btn-primary" onclick="startTournament()">Start Tournament</button>
                 
                 <div id="file-upload-wrapper">
-                    <button class="btn-secondary" onclick="document.getElementById('csv-upload').click()">📂 Upload Progress (CSV)</button>
+                    <button class="btn-secondary" onclick="document.getElementById('csv-upload').click()">Upload Progress (CSV)</button>
                     <input type="file" id="csv-upload" accept=".csv" onchange="handleFileUpload(this)">
                 </div>
             </div>
@@ -426,9 +426,9 @@
                     referrerpolicy="strict-origin-when-cross-origin" 
                     allowfullscreen>
                 </iframe>
-                <a id="link-left" class="yt-link" target="_blank" href="#">Watch on YouTube ↗</a>
+                <a id="link-left" class="yt-link" target="_blank" href="#">Watch on YouTube</a>
                 <div class="controls">
-                    <button class="winner-btn" onclick="vote('left')">👈 WINNER</button>
+                    <button class="winner-btn" onclick="vote('left')">WINNER</button>
                 </div>
             </div>
 
@@ -441,9 +441,9 @@
                     referrerpolicy="strict-origin-when-cross-origin" 
                     allowfullscreen>
                 </iframe>
-                <a id="link-right" class="yt-link" target="_blank" href="#">Watch on YouTube ↗</a>
+                <a id="link-right" class="yt-link" target="_blank" href="#">Watch on YouTube</a>
                 <div class="controls">
-                    <button class="winner-btn" onclick="vote('right')">WINNER 👉</button>
+                    <button class="winner-btn" onclick="vote('right')">WINNER</button>
                 </div>
             </div>
         </div>
@@ -678,7 +678,7 @@
                 if (state.nextRound.length <= 1 && state.queue.length === 0) {
                     if(state.nextRound.length === 1) {
                          updateUI(); 
-                         alert(`🏆 WINNER: ${state.nextRound[0].title || state.nextRound[0].id}`);
+                         alert(`WINNER: ${state.nextRound[0].title || state.nextRound[0].id}`);
                     }
                     return;
                 }
@@ -792,7 +792,7 @@ function getEmbedUrl(videoId, autoplay = '0') { // Change default to '0'
                 }
 
                 // Add Link
-                const link = `<a href="https://www.youtube.com/watch?v=${vid.id}" target="_blank" class="table-link">↗</a>`;
+                const link = `<a href="https://www.youtube.com/watch?v=${vid.id}" target="_blank" class="table-link">Open</a>`;
 
                 tr.innerHTML = `
                     <td>${vid.title || 'Unknown Title'}</td>
@@ -1054,5 +1054,3 @@ function getEmbedUrl(videoId, autoplay = '0') { // Change default to '0'
     </script>
 </body>
 </html>
-
-
